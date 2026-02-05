@@ -213,11 +213,54 @@ class HonACClimateEntity(HonEntity, ClimateEntity):
         self.async_write_ha_state()
 
     async def async_turn_on(self, **kwargs: Any) -> None:
+        # FIX: Set onOffStatus to '1' to ensure AC turns on
+        try:
+            on_off_param = self._device.commands["startProgram"].parameters.get("onOffStatus")
+            if on_off_param and hasattr(on_off_param, 'value'):
+                on_off_param.value = "1"
+        except Exception as e:
+            _LOGGER.debug("Could not set onOffStatus in startProgram: %s", e)
+
+        # FIX: Correct windDirectionVerticalPositionSequence if invalid
+        # Some AC models have this parameter with value '0' but only accept ['2', '4', '5', '6', '8']
+        try:
+            vert_pos_seq = self._device.commands["startProgram"].parameters.get("windDirectionVerticalPositionSequence")
+            if vert_pos_seq and hasattr(vert_pos_seq, 'value') and hasattr(vert_pos_seq, 'values'):
+                current_value = str(vert_pos_seq.value)
+                allowed_values = [str(v) for v in vert_pos_seq.values]
+                if current_value not in allowed_values and allowed_values:
+                    _LOGGER.debug(
+                        "Fixing windDirectionVerticalPositionSequence: '%s' -> '%s'",
+                        current_value, allowed_values[0]
+                    )
+                    vert_pos_seq.value = allowed_values[0]
+        except Exception as e:
+            _LOGGER.debug("Could not check windDirectionVerticalPositionSequence: %s", e)
+
         await self._device.commands["startProgram"].send()
         self._device.sync_command("startProgram", "settings")
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         await self._device.commands["stopProgram"].send()
+
+        # FIX: Correct windDirectionVerticalPositionSequence in stopProgram if invalid
+        # Same issue as turn_on: stopProgram may have invalid '0' value that causes sync to fail
+        try:
+            stop_prog_cmd = self._device.commands.get("stopProgram")
+            if stop_prog_cmd and hasattr(stop_prog_cmd, 'parameters'):
+                vert_pos_seq = stop_prog_cmd.parameters.get("windDirectionVerticalPositionSequence")
+                if vert_pos_seq and hasattr(vert_pos_seq, 'value') and hasattr(vert_pos_seq, 'values'):
+                    current_value = str(vert_pos_seq.value)
+                    allowed_values = [str(v) for v in vert_pos_seq.values]
+                    if current_value not in allowed_values and allowed_values:
+                        _LOGGER.debug(
+                            "Fixing stopProgram windDirectionVerticalPositionSequence: '%s' -> '%s'",
+                            current_value, allowed_values[0]
+                        )
+                        vert_pos_seq.value = allowed_values[0]
+        except Exception as e:
+            _LOGGER.debug("Could not check stopProgram windDirectionVerticalPositionSequence: %s", e)
+
         self._device.sync_command("stopProgram", "settings")
 
     @property
