@@ -334,6 +334,16 @@ SWITCHES: dict[str, tuple[SwitchEntityDescription, ...]] = {
             icon="mdi:bed",
             translation_key="night_mode",
         ),
+        HonSwitchEntityDescription(
+            key="voiceStatus",
+            name="Voice Status",
+            icon="mdi:volume-high",
+        ),
+        HonSwitchEntityDescription(
+            key="voiceSignStatus",
+            name="Beep/Voice Sign",
+            icon="mdi:bell-ring",
+        ),
     ),
     "REF": (
         HonSwitchEntityDescription(

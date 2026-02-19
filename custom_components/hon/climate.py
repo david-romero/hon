@@ -272,6 +272,21 @@ class HonACClimateEntity(HonEntity, ClimateEntity):
         """Set the new preset mode."""
         if program := self._device.settings.get("startProgram.program"):
             program.value = preset_mode
+        # FIX: Correct windDirectionVerticalPositionSequence if invalid before sync_command
+        # Same issue as turn_on/turn_off: value '0' is not in allowed ['2', '4', '5', '6', '8']
+        try:
+            vert_pos_seq = self._device.commands["startProgram"].parameters.get("windDirectionVerticalPositionSequence")
+            if vert_pos_seq and hasattr(vert_pos_seq, 'value') and hasattr(vert_pos_seq, 'values'):
+                current_value = str(vert_pos_seq.value)
+                allowed_values = [str(v) for v in vert_pos_seq.values]
+                if current_value not in allowed_values and allowed_values:
+                    _LOGGER.debug(
+                        "Fixing windDirectionVerticalPositionSequence in set_preset_mode: '%s' -> '%s'",
+                        current_value, allowed_values[0]
+                    )
+                    vert_pos_seq.value = allowed_values[0]
+        except Exception as e:
+            _LOGGER.debug("Could not check windDirectionVerticalPositionSequence in set_preset_mode: %s", e)
         self._device.sync_command("startProgram", "settings")
         self._set_temperature_bound()
         self._handle_coordinator_update(update=False)
