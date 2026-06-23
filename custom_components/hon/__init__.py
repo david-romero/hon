@@ -72,10 +72,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             _LOGGER.error("Error updating Hon data: %s", exc)
             raise
 
-    coordinator = DataUpdateCoordinator(
+    coordinator: DataUpdateCoordinator[dict[str, Any]] = DataUpdateCoordinator(
         hass,
         _LOGGER,
         name=DOMAIN,
+        config_entry=entry,
         update_method=async_update_data,
         update_interval=timedelta(seconds=60),
     )
@@ -111,11 +112,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.config_entries.async_update_entry(
         entry, data={**entry.data, CONF_REFRESH_TOKEN: hon.api.auth.refresh_token}
     )
-
-    coordinator: DataUpdateCoordinator[dict[str, Any]] = DataUpdateCoordinator(
-        hass, _LOGGER, name=DOMAIN
-    )
-    hon.subscribe_updates(lambda data: hass.add_job(coordinator.async_set_updated_data, data))
 
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.unique_id] = {"hon": hon, "coordinator": coordinator}
