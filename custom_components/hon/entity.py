@@ -1,3 +1,4 @@
+import logging
 from typing import Optional, Any
 
 from homeassistant.config_entries import ConfigEntry
@@ -11,6 +12,8 @@ from pyhon.appliance import HonAppliance
 
 from .const import DOMAIN
 from .typedefs import HonEntityDescription
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class HonEntity(CoordinatorEntity[DataUpdateCoordinator[dict[str, Any]]]):
@@ -35,6 +38,14 @@ class HonEntity(CoordinatorEntity[DataUpdateCoordinator[dict[str, Any]]]):
             self._attr_unique_id = f"{self._device.unique_id}{description.key}"
         else:
             self._attr_unique_id = self._device.unique_id
+
+        _LOGGER.warning(
+            "HON ENTITY: created %s — coordinator.last_update_success=%s coordinator.data=%s device.connection=%s",
+            self._attr_unique_id,
+            self.coordinator.last_update_success,
+            self.coordinator.data,
+            device.connection,
+        )
         self._handle_coordinator_update(update=False)
 
     @property
@@ -51,5 +62,11 @@ class HonEntity(CoordinatorEntity[DataUpdateCoordinator[dict[str, Any]]]):
 
     @callback
     def _handle_coordinator_update(self, update: bool = True) -> None:
+        _LOGGER.warning(
+            "HON ENTITY: coordinator update — entity=%s available=%s last_update_success=%s",
+            self._attr_unique_id,
+            self.available,
+            self.coordinator.last_update_success,
+        )
         if update:
             self.schedule_update_ha_state()

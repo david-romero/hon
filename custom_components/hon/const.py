@@ -7,7 +7,7 @@ from homeassistant.components.climate import (
 )
 
 DOMAIN: str = "hon"
-MOBILE_ID: str = "homassistant"
+MOBILE_ID: str = "pyhOn"
 CONF_REFRESH_TOKEN = "refresh_token"
 
 PLATFORMS: list[str] = [
