@@ -3,7 +3,7 @@ from typing import Any
 
 import voluptuous as vol  # type: ignore[import-untyped]
 from homeassistant import config_entries
-from homeassistant.config_entries import ConfigConfigFlowResult
+from homeassistant.config_entries import ConfigFlowResult
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 
 from .const import DOMAIN
